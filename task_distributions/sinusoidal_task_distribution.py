@@ -1,9 +1,8 @@
 from typing import Tuple, Union
 
-import base_task_distribution
 import jax
 import jax.numpy as jnp
-import sinusoidal_task
+from task_distributions import base_task_distribution, sinusoidal_task
 
 
 class SinusoidalTaskDistribution(base_task_distribution.BaseTaskDistribution):

@@ -1,6 +1,6 @@
-import base_task
 import jax
 import jax.numpy as jnp
+from task_distributions import base_task
 
 
 class SinusoidTask(base_task.BaseTask):
