@@ -4,7 +4,7 @@ import shutil
 
 import constants
 from experiments import maml_config
-from runners import sinusoidal_runner
+from runners import sinusoidal_runner, two_layer_teacher_runner
 from utils import experiment_logger, experiment_utils
 
 arg_parser = argparse.ArgumentParser()
@@ -39,9 +39,13 @@ def run(args):
 
     if configuration.task_distribution == constants.SINUSOIDAL:
         runner = sinusoidal_runner.SinusoidalRunner(configuration=configuration)
+    elif configuration.task_distribution == constants.TWO_LAYER_TEACHERS:
+        runner = two_layer_teacher_runner.TwoLayerTeacherRunner(
+            configuration=configuration
+        )
 
     runner.train()
-    runner.test()
+    runner.post_process()
 
 
 if __name__ == "__main__":
