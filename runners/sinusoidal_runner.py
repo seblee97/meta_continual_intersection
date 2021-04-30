@@ -31,9 +31,9 @@ class SinusoidalRunner(base_runner.BaseRunner):
 
         return task_distribution
 
-    def test(self):
+    def _test(self, step: int):
         evaluation_tasks = self._task_distribution.sample(
-            key=self._key, num_tasks=self._num_evaluations
+            key=self._get_key(), num_tasks=self._num_evaluations
         )
 
         trained_parameters = self._model.outer_get_parameters(
@@ -41,7 +41,9 @@ class SinusoidalRunner(base_runner.BaseRunner):
         )
 
         for i, task in enumerate(evaluation_tasks):
-            x, y = task.sample_data(key=self._key, num_datapoints=self._num_examples)
+            x, y = task.sample_data(
+                key=self._get_key(), num_datapoints=self._num_examples
+            )
             adapted_parameters = self._model.fine_tune(
                 trained_parameters, x, y, self._num_adaptation_steps
             )
@@ -59,7 +61,11 @@ class SinusoidalRunner(base_runner.BaseRunner):
         plt.plot(x_range, task(x_range), label="ground truth")
         for i, parameters in enumerate(adapted_parameters):
             regression = self._model.network_forward(parameters, x_range)
-            plt.plot(x_range, regression, label=f"{i} tuning")
+            if i == 0 or i > 98:
+                plt.plot(x_range, regression, label=f"{i} tuning")
 
         plt.legend()
         fig.savefig(save_name)
+
+    def _post_process(self):
+        pass
