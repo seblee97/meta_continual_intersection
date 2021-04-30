@@ -20,6 +20,10 @@ class DataLogger:
         self._df_columns = []
         self._logger_data = {}
 
+    @property
+    def df_path(self):
+        return self._logfile_path
+
     def write_scalar(self, tag: str, step: int, scalar: float) -> None:
         """Write (scalar) data to dictionary.
 
