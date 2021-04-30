@@ -1,4 +1,5 @@
-notes/
-*__pycache__*
+experiments/results/
 *.DS_Store
-*.egg-info
+*__pycache__*
+notes/
+*egg-info
