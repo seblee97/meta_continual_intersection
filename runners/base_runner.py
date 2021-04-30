@@ -3,15 +3,16 @@ import abc
 import constants
 import jax
 import jax.numpy as jnp
+import pandas as pd
 from experiments import maml_config
 from model import maml
-from utils import data_logger, experiment_logger
+from utils import data_logger, experiment_logger, plotters
 
 
 class BaseRunner(abc.ABC):
     def __init__(self, configuration: maml_config.MAMLConfig):
 
-        self._key = jax.random.PRNGKey(configuration.seed)
+        self.__key = jax.random.PRNGKey(configuration.seed)
 
         self._task_distribution = self._setup_task_distribution(
             configuration=configuration
@@ -27,6 +28,7 @@ class BaseRunner(abc.ABC):
         self._num_tasks = configuration.num_tasks
         self._batch_size = configuration.batch_size
 
+        self._test_frequency = configuration.test_frequency
         self._num_evaluations = configuration.num_evaluations
         self._num_examples = configuration.num_examples
         self._num_adaptation_steps = configuration.num_adaptation_steps
@@ -36,14 +38,19 @@ class BaseRunner(abc.ABC):
         self._log_to_df = configuration.log_to_df
         self._checkpoint_frequency = configuration.checkpoint_frequency
         self._experiment_path = configuration.experiment_path
+        self._plot_losses = configuration.plot_losses
 
     @abc.abstractmethod
     def _setup_task_distribution(self, configuration: maml_config.MAMLConfig):
         pass
 
+    def _get_key(self):
+        self.__key, new_key = jax.random.split(self.__key)
+        return new_key
+
     def _setup_model(self, configuration: maml_config.MAMLConfig):
         return maml.MAML(
-            key=self._key,
+            key=self._get_key(),
             inner_optimiser_type=configuration.inner_optimiser_type,
             outer_optimiser_type=configuration.outer_optimiser_type,
             inner_lr=configuration.inner_lr,
@@ -62,10 +69,10 @@ class BaseRunner(abc.ABC):
         for task in tasks:
 
             x_inner, y_inner = task.sample_data(
-                key=self._key, num_datapoints=batch_size
+                key=self._get_key(), num_datapoints=batch_size
             )
             x_outer, y_outer = task.sample_data(
-                key=self._key, num_datapoints=batch_size
+                key=self._get_key(), num_datapoints=batch_size
             )
 
             batch_x_inner.append(x_inner)
@@ -84,8 +91,11 @@ class BaseRunner(abc.ABC):
 
         for i in range(self._num_epochs):
 
+            if i % self._test_frequency == 0 and i != 0:
+                self._test(i)
+
             task_sample = self._task_distribution.sample(
-                key=self._key, num_tasks=self._num_tasks
+                key=self._get_key(), num_tasks=self._num_tasks
             )
 
             (
@@ -110,7 +120,7 @@ class BaseRunner(abc.ABC):
 
             if self._log_to_df:
                 self._data_logger.write_scalar(
-                    tag=constants.META_LOSS, step=i, scalar=meta_loss
+                    tag=constants.META_LOSS, step=i, scalar=float(meta_loss)
                 )
 
             if i % self._print_frequency == 0:
@@ -120,5 +130,19 @@ class BaseRunner(abc.ABC):
                 self._data_logger.checkpoint()
 
     @abc.abstractmethod
-    def test(self):
+    def _test(self, step: int):
         pass
+
+    @abc.abstractmethod
+    def _post_process(self):
+        pass
+
+    def post_process(self):
+        if self._plot_losses:
+            df = pd.read_csv(self._data_logger.df_path)
+            plotters.plot_losses(
+                losses=df[constants.META_LOSS].dropna().to_numpy(),
+                save_folder=self._experiment_path,
+            )
+
+        self._post_process()
