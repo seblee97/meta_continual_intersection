@@ -18,6 +18,35 @@ class MAMLConfigTemplate:
         level=[constants.SINUSOIDAL],
     )
 
+    _two_layer_teachers_template = config_template.Template(
+        fields=[
+            config_field.Field(
+                name=constants.INPUT_DIM,
+                types=[int],
+                requirements=[lambda x: x > 0],
+                key=f"{constants.TWO_LAYER_TEACHERS}_{constants.INPUT_DIM}",
+            ),
+            config_field.Field(
+                name=constants.HIDDEN_DIMENSION,
+                types=[int],
+                requirements=[lambda x: x > 0],
+            ),
+            config_field.Field(
+                name=constants.OUTPUT_DIM, types=[int], requirements=[lambda x: x > 0]
+            ),
+            config_field.Field(
+                name=constants.ACTIVATION,
+                types=[str],
+                requirements=[lambda x: x in [constants.RELU, constants.SIGMOIDAL]],
+                key=f"{constants.TWO_LAYER_TEACHERS}_{constants.ACTIVATION}",
+            ),
+            config_field.Field(name=constants.MAX_ROTATION, types=[int, float]),
+        ],
+        dependent_variables=[constants.TASK_DISTRIBUTION],
+        dependent_variables_required_values=[[constants.TWO_LAYER_TEACHERS]],
+        level=[constants.TWO_LAYER_TEACHERS],
+    )
+
     _training_template = config_template.Template(
         fields=[
             config_field.Field(
@@ -74,6 +103,7 @@ class MAMLConfigTemplate:
                 name=constants.PLOT_EVALUATIONS,
                 types=[bool],
             ),
+            config_field.Field(name=constants.TEST_FREQUENCY, types=[int]),
         ],
         level=[constants.TESTING],
     )
@@ -88,6 +118,7 @@ class MAMLConfigTemplate:
                 types=[int],
                 requirements=[lambda x: x > 0],
             ),
+            config_field.Field(name=constants.PLOT_LOSSES, types=[bool]),
         ],
         level=[constants.LOGGING],
     )
@@ -114,6 +145,7 @@ class MAMLConfigTemplate:
         ],
         nested_templates=[
             _sinusoidal_template,
+            _two_layer_teachers_template,
             _training_template,
             _testing_template,
             _logging_template,
