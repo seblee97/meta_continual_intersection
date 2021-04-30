@@ -11,20 +11,27 @@ sinusoidal:
     phase_min: 0
     phase_max: 3.14
 
+two_layer_teachers:
+    input_dim: 1000
+    hidden_dimension: 5
+    output_dim: 1
+    activation: sigmoidal
+    max_rotation: 0.1 # radians
 
 training:
-    num_epochs: 100000
+    num_epochs: 2000
     num_tasks: 5
     batch_size: 5
-    inner_lr: 0.001
+    inner_lr: 0.01
     outer_lr: 0.001
     inner_optimiser_type: sgd
     outer_optimiser_type: adam
 
 testing:
+    test_frequency: 100
     num_evaluations: 5
-    num_examples: 5
-    num_adaptation_steps: 5
+    num_examples: 10
+    num_adaptation_steps: 100
     plot_evaluations: True
 
 logging:
@@ -32,15 +39,13 @@ logging:
     print_frequency: 100
     log_to_df: True
     checkpoint_frequency: 100
+    plot_losses: True
 
 model:
-    input_dim: 1
+    input_dim: 1000
     network_specification:
         - fc:
-            output_dim: 40
-            activation: relu
-        - fc:
-            output_dim: 40
+            output_dim: 5
             activation: relu
         - fc:
             output_dim: 1
